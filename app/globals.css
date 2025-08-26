@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, :root { height: 100%; }
+
+h1 { @apply text-3xl font-bold text-slate-800; }
+h2 { @apply text-2xl font-semibold text-slate-800; }
+p { @apply text-base text-gray-700; }
