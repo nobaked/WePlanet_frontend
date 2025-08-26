@@ -1,4 +1,7 @@
-name: Deploy Python app to Azure Web App
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - app-002-gen10-step3-2-node-oshima4
 
 on:
   push:
@@ -7,31 +10,47 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ★★★ buildとdeployのジョブを1つに統合して高速化 ★★★
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python version
-        uses: actions/setup-python@v5
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11' # 必要に応じて変更
+          node-version: '18.x' # Azure App Serviceで安定しているLTS版を推奨
 
-      - name: Install dependencies
+      - name: npm install and build
+        env:
+          NEXT_PUBLIC_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_API_ENDPOINT }}
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-      - name: Zip artifact for deployment
-        run: zip release.zip . -r -x "venv/*"
-
-      # ★★★ ここからが変更点 ★★★
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+          npm install
+          npm run build --if-present
+      
+      # ★★★ ここからがデプロイステップ ★★★
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3 # v3を推奨
         with:
-          app-name: 'app-002-gen10-step3-2-py-oshima4' # あなたのアプリ名
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: 'release.zip'
+          # ★★★ 1. 正しいアプリ名に修正 ★★★
+          app-name: 'app-002-gen10-step3-2-node-oshima4'
+          slot-name: 'Production'
+          
+          # ★★★ 2. 正しい発行プロファイルのシークレットを指定 ★★★
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }} # シークレット名を汎用的なものに変更
+          
+          # ★★★ 3. packageにはビルド後のカレントディレクトリを指定 ★★★
+          package: .
+          
+      # ★★★ 4. 起動コマンドを設定して確実な起動を促す ★★★
+      - name: Set up startup command
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: 'app-002-gen10-step3-2-node-oshima4'
+          startup-command: 'npx next start -p $PORT'
