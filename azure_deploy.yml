@@ -1,52 +1,65 @@
-# .github/workflows/your-workflow-name.yml
+# ワークフローの名前
+name: Build and Deploy Next.js to Azure App Service
 
-name: Build and deploy Node.js app to Azure Web App - app-002-gen10-step3-2-node-oshima4
-
+# ワークフローが実行されるトリガー
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - main # mainブランチにプッシュされた時に実行
+  workflow_dispatch: # 手動でも実行可能にする
 
+# 実行されるジョブの定義
 jobs:
   build-and-deploy:
+    # 実行環境
     runs-on: ubuntu-latest
+
+    # デプロイ先の環境情報を設定（GitHubのEnvironments機能用）
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
+    # 実行されるステップ
     steps:
+      # 1. リポジトリのコードをチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Node.jsのバージョンを設定
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '18.x' # Azure App Serviceで安定しているLTS版を推奨
 
-      - name: npm install and build
+      # 3. 依存関係のインストールと本番ビルド
+      - name: Install dependencies and build
+        # ビルド時にのみ必要な環境変数を設定
         env:
           NEXT_PUBLIC_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_API_ENDPOINT }}
         run: |
           npm install
           npm run build --if-present
 
-      # ★★★ 1. Azureへのログインステップを追加 ★★★
+      # 4. Azureへのログイン（最重要）
+      # このステップをデプロイより前に行うことで、後続のAzure関連アクションが認証されます
       - name: 'Login to Azure'
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }} # サービスプリンシパルの認証情報を使用
+          # GitHub Secretsに登録したサービスプリンシパルの認証情報を使用
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # ★★★ 2. デプロイステップからは publish-profile を削除 ★★★
+      # 5. Azure Web Appへのデプロイ
       - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp # 後続のステップでURLを参照するためにIDを設定
+        uses: azure/webapps-deploy@v3 # 最新のv3を推奨
         with:
           app-name: 'app-002-gen10-step3-2-node-oshima4'
           slot-name: 'Production'
+          # packageにはビルド後の成果物を含むカレントディレクトリを指定
           package: .
 
-      # ★★★ このステップも azure/login での認証を使用します ★★★
+      # 6. Azure Web Appの起動コマンドを設定
+      # standaloneモードでビルドされたNext.jsアプリを正しく起動するためのコマンド
       - name: Set up startup command
         uses: azure/appservice-settings@v1
         with:
