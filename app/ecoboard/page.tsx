@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import Header from "@/components/layout/header";
+import Header from "@/components/layout/Header";
 
 type Summary = { month: string; sugi: number; co2_g: number };
 
