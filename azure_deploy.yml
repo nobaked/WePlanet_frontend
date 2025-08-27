@@ -1,37 +1,28 @@
-# ワークフローの名前（実態に合わせて修正）
+# ワークフローの名前を、実際のアプリ名に合わせて統一
 name: Build and deploy Node.js app to Azure Web App - app-002-gen10-step3-2-node-oshima4
 
-# ワークフローが実行されるトリガー
 on:
   push:
     branches:
-      - main # mainブランチにプッシュされた時に実行
-  workflow_dispatch: # 手動でも実行可能にする
+      - main
+  workflow_dispatch:
 
-# 実行されるジョブの定義
 jobs:
   build-and-deploy:
-    # 実行環境
     runs-on: ubuntu-latest
-
-    # デプロイ先の環境情報を設定
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
-    # 実行されるステップ
     steps:
-      # 1. リポジトリのコードをチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node.jsのバージョンを設定
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
 
-      # 3. 依存関係のインストールと本番ビルド
       - name: Install dependencies and build
         env:
           NEXT_PUBLIC_API_ENDPOINT: ${{ secrets.NEXT_PUBLIC_API_ENDPOINT }}
@@ -39,26 +30,21 @@ jobs:
           npm install
           npm run build --if-present
 
-      # 4. Azureへのログイン
       - name: 'Login to Azure'
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 5. Azure Web Appへのデプロイ
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          # ★★★ 正しいアプリ名を反映 ★★★
           app-name: 'app-002-gen10-step3-2-node-oshima4'
           slot-name: 'Production'
           package: .
 
-      # 6. Azure Web Appの起動コマンドを設定
       - name: Set up startup command
         uses: azure/appservice-settings@v1
         with:
-          # ★★★ 正しいアプリ名を反映 ★★★
           app-name: 'app-002-gen10-step3-2-node-oshima4'
           startup-command: 'npx next start -p $PORT'
