@@ -1,31 +1,25 @@
 "use client";
-
+// 必要なインポート
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from 'next/dynamic';
 
-export default function CallbackPage() {
+function CallbackComponent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // URL パラメータから token を取得
     const token = searchParams.get("token");
-
     if (token) {
-      // localStorage に保存
       localStorage.setItem("access_token", token);
-
-      // マイページに遷移
       router.push("/mypage");
     } else {
-      // token が無い場合はログインページへ
       router.push("/login");
     }
-  }, [searchParams, router]);
+  }, [router, searchParams]);
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <p className="text-lg">ログイン処理中です…</p>
-    </div>
-  );
+  return <div>ログイン処理中です…</div>;
 }
+
+// ssr: false を指定して動的に読み込む
+export default dynamic(() => Promise.resolve(CallbackComponent), { ssr: false });
