@@ -1,5 +1,5 @@
 # ワークフローの名前
-name: Build and Deploy Next.js to Azure App Service
+name: Build and Deploy Next.js to Azure Web App
 
 # ワークフローが実行されるトリガー
 on:
@@ -53,7 +53,8 @@ jobs:
         id: deploy-to-webapp # 後続のステップでURLを参照するためにIDを設定
         uses: azure/webapps-deploy@v3 # 最新のv3を推奨
         with:
-          app-name: 'app-002-gen10-step3-2-node-oshima4'
+          # ★★★ 正しいアプリ名に修正 ★★★
+          app-name: 'app-001-step3-1-suzuyu-node-50'
           slot-name: 'Production'
           # packageにはビルド後の成果物を含むカレントディレクトリを指定
           package: .
@@ -63,5 +64,6 @@ jobs:
       - name: Set up startup command
         uses: azure/appservice-settings@v1
         with:
-          app-name: 'app-002-gen10-step3-2-node-oshima4'
+          # ★★★ 正しいアプリ名に修正 ★★★
+          app-name: 'app-001-step3-1-suzuyu-node-50'
           startup-command: 'npx next start -p $PORT'
