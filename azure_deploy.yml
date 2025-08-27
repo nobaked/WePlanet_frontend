@@ -1,5 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# .github/workflows/your-workflow-name.yml
 
 name: Build and deploy Node.js app to Azure Web App - app-002-gen10-step3-2-node-oshima4
 
@@ -10,7 +9,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ★★★ buildとdeployのジョブを1つに統合して高速化 ★★★
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
@@ -24,7 +22,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x' # Azure App Serviceで安定しているLTS版を推奨
+          node-version: '18.x'
 
       - name: npm install and build
         env:
@@ -32,23 +30,23 @@ jobs:
         run: |
           npm install
           npm run build --if-present
-      
-      # ★★★ ここからがデプロイステップ ★★★
+
+      # ★★★ 1. Azureへのログインステップを追加 ★★★
+      - name: 'Login to Azure'
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }} # サービスプリンシパルの認証情報を使用
+
+      # ★★★ 2. デプロイステップからは publish-profile を削除 ★★★
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3 # v3を推奨
+        uses: azure/webapps-deploy@v3
         with:
-          # ★★★ 1. 正しいアプリ名に修正 ★★★
           app-name: 'app-002-gen10-step3-2-node-oshima4'
           slot-name: 'Production'
-          
-          # ★★★ 2. 正しい発行プロファイルのシークレットを指定 ★★★
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }} # シークレット名を汎用的なものに変更
-          
-          # ★★★ 3. packageにはビルド後のカレントディレクトリを指定 ★★★
           package: .
-          
-      # ★★★ 4. 起動コマンドを設定して確実な起動を促す ★★★
+
+      # ★★★ このステップも azure/login での認証を使用します ★★★
       - name: Set up startup command
         uses: azure/appservice-settings@v1
         with:
